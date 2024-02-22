@@ -1,5 +1,6 @@
-import puppeteer, { ElementHandle, Page } from 'puppeteer';
-import { SSREcommerceProductRepository } from '../../db/SSREcommerceProductRepository.js';
+import puppeteer, { ElementHandle, Page, ProductLauncher } from 'puppeteer';
+import { CSREcommerceProductRepository } from '../../db/CSREcommerceProductRepository.js';
+import { writeFileSync } from 'fs';
 
 function cleanProduct(product: {
   websiteId: string;
@@ -23,12 +24,12 @@ async function extractProduct(productHandle: ElementHandle<Element>) {
   );
 
   const name = await productHandle?.$eval(
-    '[class*="ProductItem_product-item-title"]',
+    '[class*="_product-item-title"]',
     (el) => el.textContent
   );
 
   const price = await productHandle?.$eval(
-    '[class*="ProductItem_product-item-price"]',
+    '[class*="_product-item-price"]',
     (el) => el.textContent
   );
 
@@ -39,6 +40,7 @@ async function extractProduct(productHandle: ElementHandle<Element>) {
   const imageUrl = await productHandle?.$eval('img', (el) =>
     el.getAttribute('src')
   );
+
   if (websiteId && name && price && rating && imageUrl) {
     return cleanProduct({
       websiteId,
@@ -52,10 +54,8 @@ async function extractProduct(productHandle: ElementHandle<Element>) {
 
 async function scrapePage(page: Page, insertCB: any) {
   console.log('Scraping page ' + page.url());
-  const productHandles = await page.$$(
-    '[class*="ProductItem_product-item-container"]'
-  );
-  const products = [];
+  const productHandles = await page.$$('[class*="_product-item-container"]');
+  const products: any = [];
   for (const productHandle of productHandles) {
     const product = await extractProduct(productHandle);
     insertCB(product);
@@ -64,31 +64,31 @@ async function scrapePage(page: Page, insertCB: any) {
   return products;
 }
 
-async function getNextPage(page: Page) {
+async function getNextPageButton(page: Page) {
   const nextButton = await page.$(
     '.MuiPaginationItem-previousNext:not(.Mui-disabled)[aria-label="Go to next page"]'
   );
-  if (nextButton) {
-    const nextPage = await nextButton.evaluate((el) => el.getAttribute('href'));
-    return 'http://localhost:3000' + nextPage;
-  }
-  return null;
+  return nextButton;
 }
 
 async function startScraping(insertCB: any) {
   const browser = await puppeteer.launch({ headless: 'new' });
   const [page] = await browser.pages();
 
-  await page.goto('http://localhost:3000/products');
+  await page.goto('http://localhost:5173');
+
+  await page.waitForSelector('p[class*="_product-item-title"]');
 
   const products = [];
 
   while (true) {
     const pageProducts = await scrapePage(page, insertCB);
     products.push(...pageProducts);
-    const nextPage = await getNextPage(page);
+    const nextPage = await getNextPageButton(page);
+
     if (nextPage) {
-      await page.goto(nextPage);
+      await nextPage.click();
+      await page.waitForSelector('p[class*="_product-item-title"]');
     } else break;
   }
 
@@ -96,14 +96,16 @@ async function startScraping(insertCB: any) {
   return products;
 }
 
-export default async function scrapeSSREcommerceWebsite() {
+export default async function scrapeCSREcommerceWebsite() {
   const startTime = Date.now();
-  const ssrEcommerceProductRepository = new SSREcommerceProductRepository();
-  await ssrEcommerceProductRepository.connect();
+  const csrEcommerceProductRepository = new CSREcommerceProductRepository();
+  await csrEcommerceProductRepository.connect();
+
   const products = await startScraping((product: any) => {
-    ssrEcommerceProductRepository.insertProduct(product!);
+    csrEcommerceProductRepository.insertProduct(product!);
   });
-  ssrEcommerceProductRepository.disconnect();
+
+  csrEcommerceProductRepository.disconnect();
   const endTime = Date.now();
   return {
     products,

@@ -1,10 +1,12 @@
 import scrapeSSREcommerceWebsite from './scrapers/SSRScraper/index.js';
+import scrapeCSREcommerceWebsite from './scrapers/CSRScraper/index.js';
 
-(async () => {
-  const startTime = Date.now();
-  await scrapeSSREcommerceWebsite();
-  const endTime = Date.now();
+// (async () => {
+//   const { products, ...result } = await scrapeSSREcommerceWebsite();
+//   console.log(result);
+// })();
 
-  console.log(new Date(startTime));
-  console.log(new Date(endTime));
-})();
+// (async () => {
+//   const { products, ...result } = await scrapeCSREcommerceWebsite();
+//   console.log(result);
+// })();
