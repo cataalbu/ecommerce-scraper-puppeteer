@@ -1,5 +1,7 @@
-import scrapeSSREcommerceWebsite from '../../scrapers/SSRScraper';
+import scrapeSSREcommerceWebsite from '../../scrapers/SSRScraper/index.js';
 
-const data = scrapeSSREcommerceWebsite();
+(async () => {
+  const data = await scrapeSSREcommerceWebsite();
 
-console.log(data);
+  console.log(data);
+})();

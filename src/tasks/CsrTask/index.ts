@@ -1,5 +1,7 @@
-import scrapeCSREcommerceWebsite from '../../scrapers/CSRScraper';
+import scrapeCSREcommerceWebsite from '../../scrapers/CSRScraper/index.js';
 
-const data = scrapeCSREcommerceWebsite();
+(async () => {
+  const data = await scrapeCSREcommerceWebsite();
 
-console.log(data);
+  console.log(data);
+})();
