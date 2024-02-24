@@ -8,7 +8,7 @@
   "scripts": {
     "start": "ts-node --esm ./src/index.ts",
     "dev": "nodemon --exec ts-node --esm ./src/index.ts",
-    "build": "tsc src/index.ts --outDir dist/ --module commonjs",
+    "build": "tsc",
     "run": "node dist/index.js"
   },
   "dependencies": {
