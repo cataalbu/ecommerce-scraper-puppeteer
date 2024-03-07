@@ -1,6 +1,18 @@
 import puppeteer, { ElementHandle, Page, ProductLauncher } from 'puppeteer';
 import { CSREcommerceProductRepository } from '../../db/CSREcommerceProductRepository.js';
-import { writeFileSync } from 'fs';
+
+const baseUrl = 'http://localhost:5173';
+
+async function cleanCollection(
+  csrEcommerceProductRepository: CSREcommerceProductRepository
+) {
+  try {
+    await csrEcommerceProductRepository.deleteAllProducts();
+  } catch (err) {
+    console.log(err);
+    throw new Error('Error while cleaning collection');
+  }
+}
 
 function cleanProduct(product: {
   websiteId: string;
@@ -75,7 +87,7 @@ async function startScraping(insertCB: any) {
   const browser = await puppeteer.launch({ headless: 'new' });
   const [page] = await browser.pages();
 
-  await page.goto('http://localhost:5173');
+  await page.goto(baseUrl);
 
   await page.waitForSelector('p[class*="_product-item-title"]');
 
@@ -101,15 +113,18 @@ export default async function scrapeCSREcommerceWebsite() {
   const csrEcommerceProductRepository = new CSREcommerceProductRepository();
   await csrEcommerceProductRepository.connect();
 
-  const products = await startScraping((product: any) => {
+  await cleanCollection(csrEcommerceProductRepository);
+
+  const scrapedProducts = await startScraping((product: any) => {
     csrEcommerceProductRepository.insertProduct(product!);
   });
 
   csrEcommerceProductRepository.disconnect();
   const endTime = Date.now();
+
   return {
-    products,
-    scrapeCount: products.length,
+    scrapedProducts,
+    scrapeCount: scrapedProducts.length,
     startTime: new Date(startTime),
     endTime: new Date(endTime),
   };

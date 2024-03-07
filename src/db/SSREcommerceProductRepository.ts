@@ -8,11 +8,13 @@ export class SSREcommerceProductRepository {
   constructor() {
     this.client = new MongoClient('mongodb://127.0.0.1:27017/');
   }
+
   async connect() {
     await this.client.connect();
     this.db = this.client.db('mock_ecommerce_db');
     this.collection = this.db.collection('puppeteer_ssr_scraped_products');
   }
+
   async insertProduct(product: {
     name: string;
     price: number;
@@ -26,6 +28,13 @@ export class SSREcommerceProductRepository {
       });
     }
   }
+
+  async deleteAllProducts() {
+    if (this.collection) {
+      await this.collection.deleteMany();
+    }
+  }
+
   async disconnect() {
     await this.client.close();
   }

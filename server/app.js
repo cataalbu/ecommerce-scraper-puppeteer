@@ -10,11 +10,15 @@ const port = process.env.PORT || 3000;
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
-app.route('/csr').get((req, res) => {
+app.route('/csr').post((req, res) => {
+  const id = req.body.id;
+  const website = req.body.website;
   try {
+    console.log('Starting CSR task');
     const child_process = spawn('node', [
       path.join('dist', 'tasks', 'CsrTask', 'index.js'),
-      'fdas123321fads',
+      id,
+      website,
     ]);
 
     child_process.stdout.on('data', (data) => {
@@ -32,15 +36,18 @@ app.route('/csr').get((req, res) => {
     return res.json({ message: 'Scrape CSR task started successfully' });
   } catch (error) {
     console.log(error);
-    return res.json({ message: 'Error starting scrape CSR task' }).status(500);
+    return res.status(500).json({ message: 'Error starting scrape CSR task' });
   }
 });
 
-app.route('/ssr').get((req, res) => {
+app.route('/ssr').post((req, res) => {
+  const id = req.body.id;
+  const website = req.body.website;
   try {
-    spawn.join('node', [
-      path('..', 'dist', 'tasks', 'SsrTask', 'index.js'),
-      'fdas123321fads',
+    const child_process = spawn('node', [
+      path.join('dist', 'tasks', 'SsrTask', 'index.js'),
+      id,
+      website,
     ]);
 
     child_process.stdout.on('data', (data) => {
@@ -54,11 +61,10 @@ app.route('/ssr').get((req, res) => {
     child_process.on('close', (code) => {
       console.log(`child process exited with code ${code}`);
     });
-
     return res.json({ message: 'Scrape SSR task started successfully' });
   } catch (error) {
     console.log(error);
-    return res.json({ message: 'Error starting scrape SSR task' }).status(500);
+    return res.status(500).json({ message: 'Error starting scrape SSR task' });
   }
 });
 
