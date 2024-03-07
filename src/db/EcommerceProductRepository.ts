@@ -1,18 +1,20 @@
 import { Collection, Db, MongoClient } from 'mongodb';
+import { config } from 'dotenv';
+config();
 
-export class CSREcommerceProductRepository {
+export class EcommerceProductRepository {
   client: MongoClient;
   db: Db | undefined;
   collection: Collection | undefined;
 
   constructor() {
-    this.client = new MongoClient('mongodb://127.0.0.1:27017/');
+    this.client = new MongoClient(process.env.MONGODB_URL || '');
   }
 
   async connect() {
     await this.client.connect();
-    this.db = this.client.db('mock_ecommerce_db');
-    this.collection = this.db.collection('puppeteer_csr_scraped_products');
+    this.db = this.client.db(process.env.MONGODB_DB_NAME);
+    this.collection = this.db.collection('scrapedproducts');
   }
 
   async insertProduct(product: {

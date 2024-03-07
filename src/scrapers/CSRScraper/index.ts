@@ -1,10 +1,10 @@
 import puppeteer, { ElementHandle, Page, ProductLauncher } from 'puppeteer';
-import { CSREcommerceProductRepository } from '../../db/CSREcommerceProductRepository.js';
+import { EcommerceProductRepository } from '../../db/EcommerceProductRepository.js';
 
 const baseUrl = 'http://localhost:5173';
 
 async function cleanCollection(
-  csrEcommerceProductRepository: CSREcommerceProductRepository
+  csrEcommerceProductRepository: EcommerceProductRepository
 ) {
   try {
     await csrEcommerceProductRepository.deleteAllProducts();
@@ -110,7 +110,7 @@ async function startScraping(insertCB: any) {
 
 export default async function scrapeCSREcommerceWebsite() {
   const startTime = Date.now();
-  const csrEcommerceProductRepository = new CSREcommerceProductRepository();
+  const csrEcommerceProductRepository = new EcommerceProductRepository();
   await csrEcommerceProductRepository.connect();
 
   await cleanCollection(csrEcommerceProductRepository);

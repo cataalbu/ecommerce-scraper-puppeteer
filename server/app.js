@@ -31,6 +31,15 @@ app.route('/csr').post((req, res) => {
 
     child_process.on('close', (code) => {
       console.log(`child process exited with code ${code}`);
+      if (code !== 0) {
+        fetch(`${process.env.SCRAPE_SENSE_API_URL}/scrape-tasks/crash/${id}`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-api-key': process.env.SCRAPE_SENSE_API_KEY || '',
+          },
+        });
+      }
     });
 
     return res.json({ message: 'Scrape CSR task started successfully' });
@@ -60,6 +69,15 @@ app.route('/ssr').post((req, res) => {
 
     child_process.on('close', (code) => {
       console.log(`child process exited with code ${code}`);
+      if (code !== 0) {
+        fetch(`${process.env.SCRAPE_SENSE_API_URL}/scrape-tasks/crash/${id}`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-api-key': process.env.SCRAPE_SENSE_API_KEY || '',
+          },
+        });
+      }
     });
     return res.json({ message: 'Scrape SSR task started successfully' });
   } catch (error) {

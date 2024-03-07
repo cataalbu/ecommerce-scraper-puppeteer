@@ -1,11 +1,11 @@
 import puppeteer, { ElementHandle, Page } from 'puppeteer';
-import { SSREcommerceProductRepository } from '../../db/SSREcommerceProductRepository.js';
+import { EcommerceProductRepository } from '../../db/EcommerceProductRepository.js';
 import { htmlOnly } from '../utils/index.js';
 
 const baseUrl = 'http://localhost:3001';
 
 async function cleanCollection(
-  ssrEcommerceProductRepository: SSREcommerceProductRepository
+  ssrEcommerceProductRepository: EcommerceProductRepository
 ) {
   try {
     await ssrEcommerceProductRepository.deleteAllProducts();
@@ -114,7 +114,7 @@ async function startScraping(insertCB: any) {
 
 export default async function scrapeSSREcommerceWebsite() {
   const startTime = Date.now();
-  const ssrEcommerceProductRepository = new SSREcommerceProductRepository();
+  const ssrEcommerceProductRepository = new EcommerceProductRepository();
   await ssrEcommerceProductRepository.connect();
 
   await cleanCollection(ssrEcommerceProductRepository);
