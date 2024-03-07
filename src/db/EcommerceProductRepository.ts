@@ -1,6 +1,5 @@
 import { Collection, Db, MongoClient } from 'mongodb';
-import { config } from 'dotenv';
-config();
+import 'dotenv/config';
 
 export class EcommerceProductRepository {
   client: MongoClient;

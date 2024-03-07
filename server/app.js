@@ -3,12 +3,15 @@ import 'dotenv/config';
 import bodyParser from 'body-parser';
 import { spawn } from 'child_process';
 import path from 'path';
+import { validateApiKeyMiddleware } from './middleware.js';
 
 const app = express();
 const port = process.env.PORT || 3000;
 
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
+
+app.use(validateApiKeyMiddleware);
 
 app.route('/csr').post((req, res) => {
   const id = req.body.id;
