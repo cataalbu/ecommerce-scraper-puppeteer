@@ -2,7 +2,7 @@ import puppeteer, { ElementHandle, Page } from 'puppeteer';
 import { EcommerceProductRepository } from '../../db/EcommerceProductRepository.js';
 import { htmlOnly } from '../utils/index.js';
 
-const baseUrl = 'http://localhost:3001';
+const baseUrl = 'https://ssr-scraping-website.whitecatdev.com';
 
 async function cleanCollection(
   ssrEcommerceProductRepository: EcommerceProductRepository
