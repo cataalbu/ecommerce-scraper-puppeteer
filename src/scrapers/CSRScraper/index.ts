@@ -1,131 +1,129 @@
-import puppeteer, { ElementHandle, Page, ProductLauncher } from 'puppeteer';
+import puppeteer from 'puppeteer';
+
 import { EcommerceProductRepository } from '../../db/EcommerceProductRepository.js';
+import {
+  Product,
+  ScrapedProduct,
+  Scraper,
+  ScrapingStats,
+} from '../Scraper/index.js';
 
-const baseUrl = 'https://csr-scraping-website.whitecatdev.com/';
+export class CSREcommerceWebsiteScraper implements Scraper {
+  private productRepository: EcommerceProductRepository;
+  private baseURL = 'https://csr-scraping-website.whitecatdev.com';
 
-async function cleanCollection(
-  csrEcommerceProductRepository: EcommerceProductRepository
-) {
-  try {
-    await csrEcommerceProductRepository.deleteAllProducts();
-  } catch (err) {
-    console.log(err);
-    throw new Error('Error while cleaning collection');
+  constructor() {
+    this.productRepository = new EcommerceProductRepository();
   }
-}
 
-function cleanProduct(product: {
-  websiteId: string;
-  imageUrl: string;
-  name: string;
-  price: string;
-  rating: string;
-}) {
-  const price = parseFloat(product.price.substring(1));
-  const rating = parseInt(product.rating.split(' ')[0]);
-  return {
-    ...product,
-    price,
-    rating,
-  };
-}
-
-async function extractProduct(productHandle: ElementHandle<Element>) {
-  const websiteId = await productHandle?.evaluate((el) =>
-    el.getAttribute('data-id')
-  );
-
-  const name = await productHandle?.$eval(
-    '[class*="_product-item-title"]',
-    (el) => el.textContent
-  );
-
-  const price = await productHandle?.$eval(
-    '[class*="_product-item-price"]',
-    (el) => el.textContent
-  );
-
-  const rating = await productHandle?.$eval('.MuiRating-root', (el) =>
-    el.getAttribute('aria-label')
-  );
-
-  const imageUrl = await productHandle?.$eval('img', (el) =>
-    el.getAttribute('src')
-  );
-
-  if (websiteId && name && price && rating && imageUrl) {
-    return cleanProduct({
-      websiteId,
-      name,
+  formatProduct(product: ScrapedProduct): Product {
+    const price = parseFloat(product.price.substring(1));
+    const rating = parseInt(product.rating.split(' ')[0]);
+    return {
+      ...product,
       price,
       rating,
-      imageUrl,
-    });
+    };
   }
-}
+  async extractProduct(
+    productHandle: puppeteer.ElementHandle<Element>
+  ): Promise<Product | undefined> {
+    const websiteId = await productHandle?.evaluate((el) =>
+      el.getAttribute('data-id')
+    );
 
-async function scrapePage(page: Page, insertCB: any) {
-  console.log('Scraping page ' + page.url());
-  const productHandles = await page.$$('[class*="_product-item-container"]');
-  const products: any = [];
-  for (const productHandle of productHandles) {
-    const product = await extractProduct(productHandle);
-    insertCB(product);
-    products.push(product);
-  }
-  return products;
-}
+    const name = await productHandle?.$eval(
+      '[class*="_product-item-title"]',
+      (el) => el.textContent
+    );
 
-async function getNextPageButton(page: Page) {
-  const nextButton = await page.$(
-    '.MuiPaginationItem-previousNext:not(.Mui-disabled)[aria-label="Go to next page"]'
-  );
-  return nextButton;
-}
+    const price = await productHandle?.$eval(
+      '[class*="_product-item-price"]',
+      (el) => el.textContent
+    );
 
-async function startScraping(insertCB: any) {
-  const browser = await puppeteer.launch({ headless: 'new' });
-  const [page] = await browser.pages();
+    const rating = await productHandle?.$eval('.MuiRating-root', (el) =>
+      el.getAttribute('aria-label')
+    );
 
-  await page.goto(baseUrl);
+    const imageUrl = await productHandle?.$eval('img', (el) =>
+      el.getAttribute('src')
+    );
 
-  await page.waitForSelector('p[class*="_product-item-title"]');
-
-  const products = [];
-
-  while (true) {
-    const pageProducts = await scrapePage(page, insertCB);
-    products.push(...pageProducts);
-    const nextPage = await getNextPageButton(page);
-
-    if (nextPage) {
-      await nextPage.click();
-      await page.waitForSelector('p[class*="_product-item-title"]');
-    } else break;
+    if (websiteId && name && price && rating && imageUrl) {
+      return this.formatProduct({
+        websiteId,
+        name,
+        price,
+        rating,
+        imageUrl,
+      });
+    }
   }
 
-  await browser.close();
-  return products;
-}
+  async scrapePage(page: puppeteer.Page, insertCB: any): Promise<Product[]> {
+    console.log('Scraping page ' + page.url());
+    const productHandles = await page.$$('[class*="_product-item-container"]');
+    const products: any = [];
+    for (const productHandle of productHandles) {
+      const product = await this.extractProduct(productHandle);
+      insertCB(product);
+      products.push(product);
+    }
+    return products;
+  }
 
-export default async function scrapeCSREcommerceWebsite() {
-  const startTime = Date.now();
-  const csrEcommerceProductRepository = new EcommerceProductRepository();
-  await csrEcommerceProductRepository.connect();
+  async getNextPageButton(
+    page: puppeteer.Page
+  ): Promise<puppeteer.ElementHandle<Element> | null> {
+    const nextButton = await page.$(
+      '.MuiPaginationItem-previousNext:not(.Mui-disabled)[aria-label="Go to next page"]'
+    );
+    return nextButton;
+  }
 
-  await cleanCollection(csrEcommerceProductRepository);
+  async scrapeWebsite(insertCB: any): Promise<Product[]> {
+    const browser = await puppeteer.launch({ headless: true });
+    const [page] = await browser.pages();
 
-  const scrapedProducts = await startScraping((product: any) => {
-    csrEcommerceProductRepository.insertProduct(product!);
-  });
+    await page.goto(this.baseURL);
 
-  csrEcommerceProductRepository.disconnect();
-  const endTime = Date.now();
+    await page.waitForSelector('p[class*="_product-item-title"]');
 
-  return {
-    scrapedProducts,
-    scrapeCount: scrapedProducts.length,
-    startTime: new Date(startTime),
-    endTime: new Date(endTime),
-  };
+    const products = [];
+
+    while (true) {
+      const pageProducts = await this.scrapePage(page, insertCB);
+      products.push(...pageProducts);
+      const nextPage = await this.getNextPageButton(page);
+
+      if (nextPage) {
+        await nextPage.click();
+        await page.waitForSelector('p[class*="_product-item-title"]');
+      } else break;
+    }
+
+    await browser.close();
+    return products;
+  }
+
+  private saveProduct(product: Product) {
+    this.productRepository.insertProduct(product!);
+  }
+
+  async start(): Promise<ScrapingStats> {
+    await this.productRepository.connect();
+    const startTime = Date.now();
+
+    const scrapedProducts = await this.scrapeWebsite(this.saveProduct);
+
+    const endTime = Date.now();
+    await this.productRepository.disconnect();
+
+    return {
+      scrapeCount: scrapedProducts.length,
+      startTime: new Date(startTime),
+      endTime: new Date(endTime),
+    };
+  }
 }
