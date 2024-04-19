@@ -6,6 +6,8 @@ export interface Product {
   name: string;
   price: number;
   rating: number;
+  websiteURL: string;
+  date: string;
 }
 
 export interface ScrapedProduct {

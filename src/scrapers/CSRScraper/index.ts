@@ -10,10 +10,13 @@ import {
 
 export class CSREcommerceWebsiteScraper implements Scraper {
   private productRepository: EcommerceProductRepository;
+  private startTime: string;
   private baseURL = 'https://csr-scraping-website.whitecatdev.com';
 
   constructor() {
     this.productRepository = new EcommerceProductRepository();
+    this.startTime = '';
+    this.saveProduct = this.saveProduct.bind(this);
   }
 
   formatProduct(product: ScrapedProduct): Product {
@@ -23,6 +26,8 @@ export class CSREcommerceWebsiteScraper implements Scraper {
       ...product,
       price,
       rating,
+      websiteURL: this.baseURL,
+      date: this.startTime,
     };
   }
   async extractProduct(
@@ -114,6 +119,7 @@ export class CSREcommerceWebsiteScraper implements Scraper {
   async start(): Promise<ScrapingStats> {
     await this.productRepository.connect();
     const startTime = Date.now();
+    this.startTime = new Date(startTime).toISOString();
 
     const scrapedProducts = await this.scrapeWebsite(this.saveProduct);
 

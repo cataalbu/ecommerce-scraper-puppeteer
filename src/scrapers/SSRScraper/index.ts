@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import puppeteer from 'puppeteer';
 import { EcommerceProductRepository } from '../../db/EcommerceProductRepository.js';
 import { htmlOnly } from '../utils/index.js';
@@ -10,10 +11,13 @@ import {
 
 export class SSREcommerceWebsiteScraper implements Scraper {
   private productRepository: EcommerceProductRepository;
-  private baseURL = 'https://csr-scraping-website.whitecatdev.com';
+  private startTime: string;
+  private baseURL = 'https://ssr-scraping-website.whitecatdev.com';
 
   constructor() {
     this.productRepository = new EcommerceProductRepository();
+    this.startTime = '';
+    this.saveProduct = this.saveProduct.bind(this);
   }
 
   formatProduct(product: ScrapedProduct): Product {
@@ -23,6 +27,8 @@ export class SSREcommerceWebsiteScraper implements Scraper {
       ...product,
       price,
       rating,
+      websiteURL: this.baseURL,
+      date: this.startTime,
     };
   }
 
@@ -118,6 +124,7 @@ export class SSREcommerceWebsiteScraper implements Scraper {
   async start(): Promise<ScrapingStats> {
     await this.productRepository.connect();
     const startTime = Date.now();
+    this.startTime = new Date(startTime).toISOString();
 
     const scrapedProducts = await this.scrapeWebsite(this.saveProduct);
     const endTime = Date.now();
