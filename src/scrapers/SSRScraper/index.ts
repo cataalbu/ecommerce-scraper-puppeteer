@@ -11,12 +11,12 @@ import {
 
 export class SSREcommerceWebsiteScraper implements Scraper {
   private productRepository: EcommerceProductRepository;
-  private startTime: string;
+  private startTime: Date;
   private baseURL = 'https://ssr-scraping-website.whitecatdev.com';
 
   constructor() {
     this.productRepository = new EcommerceProductRepository();
-    this.startTime = '';
+    this.startTime = new Date();
     this.saveProduct = this.saveProduct.bind(this);
   }
 
@@ -53,16 +53,16 @@ export class SSREcommerceWebsiteScraper implements Scraper {
       el.getAttribute('aria-label')
     );
 
-    const imageUrl = await productHandle?.$eval('img', (el) =>
+    const imageURL = await productHandle?.$eval('img', (el) =>
       el.getAttribute('src')
     );
-    if (websiteId && name && price && rating && imageUrl) {
+    if (websiteId && name && price && rating && imageURL) {
       return this.formatProduct({
         websiteId,
         name,
         price,
         rating,
-        imageUrl,
+        imageURL,
       });
     }
   }
@@ -95,7 +95,11 @@ export class SSREcommerceWebsiteScraper implements Scraper {
   }
 
   async scrapeWebsite(insertCB: any): Promise<Product[]> {
-    const browser = await puppeteer.launch({ headless: true });
+    const browser = await puppeteer.launch({
+      headless: true,
+      args: ['--no-sandbox'],
+      executablePath: process.env.CHROME_BIN_PATH || undefined,
+    });
     const [page] = await browser.pages();
 
     await htmlOnly(page);
@@ -124,7 +128,7 @@ export class SSREcommerceWebsiteScraper implements Scraper {
   async start(): Promise<ScrapingStats> {
     await this.productRepository.connect();
     const startTime = Date.now();
-    this.startTime = new Date(startTime).toISOString();
+    this.startTime = new Date(startTime);
 
     const scrapedProducts = await this.scrapeWebsite(this.saveProduct);
     const endTime = Date.now();

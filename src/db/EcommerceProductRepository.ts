@@ -20,8 +20,10 @@ export class EcommerceProductRepository {
     name: string;
     price: number;
     rating: number;
-    imageUrl: string;
+    imageURL: string;
     websiteId: string;
+    websiteURL: string;
+    date: Date;
   }) {
     if (this.collection) {
       await this.collection.insertOne({

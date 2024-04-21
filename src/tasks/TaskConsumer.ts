@@ -8,7 +8,7 @@ import { scrapingTaskProducerFactory } from './TaskProducer.js';
 
 async function startScrapeTask(
   scraper: Scraper,
-  taskData: { id: string; website: string }
+  taskData: { id: string; website: string; scraper: string }
 ) {
   const producer = scrapingTaskProducerFactory();
   try {
@@ -22,13 +22,20 @@ async function startScrapeTask(
           id: taskData.id,
           website: taskData.website,
           status: 'finished',
+          scraper: taskData.scraper,
         }),
       },
     ]);
   } catch (err) {
     console.error(err);
     await producer.send([
-      { id: v4(), body: JSON.stringify({ ...taskData, status: 'crashed' }) },
+      {
+        id: v4(),
+        body: JSON.stringify({
+          ...taskData,
+          status: 'crashed',
+        }),
+      },
     ]);
   }
 }

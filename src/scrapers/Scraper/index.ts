@@ -2,17 +2,17 @@ import { ElementHandle, Page } from 'puppeteer';
 
 export interface Product {
   websiteId: string;
-  imageUrl: string;
+  imageURL: string;
   name: string;
   price: number;
   rating: number;
   websiteURL: string;
-  date: string;
+  date: Date;
 }
 
 export interface ScrapedProduct {
   websiteId: string;
-  imageUrl: string;
+  imageURL: string;
   name: string;
   price: string;
   rating: string;
